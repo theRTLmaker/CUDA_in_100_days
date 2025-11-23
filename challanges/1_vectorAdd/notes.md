@@ -11,6 +11,15 @@ Performs element-wise addition of two vectors containing 32-bit floating point n
 
 ---
 
+## 🧠 Key CUDA Concepts
+How to compute a global thread index using CUDA built-ins.
+
+How grids and blocks form a hierarchical execution model.
+
+How to launch kernels with a 3D grid/block even when using only 1D indexing.
+
+---
+
 ## ⚙️ Kernel Overview
 Each thread is responsible for computing one element of the output vector.
 
@@ -20,15 +29,6 @@ If idx < N, thread idx performs
 ```cpp
 C[idx] = A[idx] + B[idx];
 ```
-
----
-
-## 🧠 Key CUDA Concepts
-How to compute a global thread index using CUDA built-ins.
-
-How grids and blocks form a hierarchical execution model.
-
-How to launch kernels with a 3D grid/block even when using only 1D indexing.
 
 ---
 

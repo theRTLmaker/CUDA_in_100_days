@@ -9,6 +9,11 @@ Explain clearly what the kernel is supposed to do.
 
 ---
 
+## 🧠 Key CUDA Concepts
+-
+
+---
+
 ## ⚙️ Kernel Overview
 Summaries such as:
 - What the kernel computes
@@ -17,17 +22,7 @@ Summaries such as:
 
 ---
 
-## 🧠 Key CUDA Concepts
-- Thread/block indexing
-- Memory hierarchy
-- Synchronization patterns
-- Any other conceptually important aspects for this day
+## Performance Analysis
 
----
 
-## 🧵 Thread Indexing Breakdown
-Explain how threads map to data (1D / 2D / 3D):
-
-```cpp
-int tid = blockIdx.x * blockDim.x + threadIdx.x;
-```
+### Running time
