@@ -32,32 +32,42 @@ def make_folder_link(d):
     return f"[`{folder}`]({path})"
 
 
-def extract_existing_descriptions():
+def extract_existing_topic_and_desc():
     """
-    Parse existing README progress table and return:
-    { "1": "my desc", "2": "..." }
+    Parse existing README progress table and return two dicts:
+      topics = { "1": "Vector Addition", ... }
+      desc   = { "1": "Basic CUDA kernel ...", ... }
     """
     text = README.read_text(encoding='utf-8')
 
+    # Capture: Day | (ignored Folder column) | Topic | Short description |
+    # Use non-greedy matches for safety; work line-by-line.
     pattern = re.compile(
-        r"\|\s*(\d+)\s*\|\s*.+?\|\s*.+?\|\s*(.*?)\s*\|"
+        r"\|\s*(\d+)\s*\|\s*.*?\|\s*(.*?)\s*\|\s*(.*?)\s*\|",
+        re.M
     )
 
+    topics = {}
     desc = {}
-    for day, description in pattern.findall(text):
-        if description.strip() not in ("...", ""):
-            desc[day] = description.strip()
-    return desc
+    for day, topic, description in pattern.findall(text):
+        topic_clean = topic.strip()
+        desc_clean = description.strip()
+        if topic_clean not in ("...", ""):
+            topics[day] = topic_clean
+        if desc_clean not in ("...", ""):
+            desc[day] = desc_clean
+    return topics, desc
 
 
 def generate_progress_block(n_done, entries):
     pct = int((n_done / TOTAL_DAYS) * 100)
 
-    # Load any user-provided descriptions
-    existing_desc = extract_existing_descriptions()
+    # Load any user-provided topics/descriptions to preserve them
+    existing_topics, existing_desc = extract_existing_topic_and_desc()
 
+    # No leading newline here (prevents extra blank line before block)
     header = (
-        "\n<!-- PROGRESS_TABLE_START -->\n"
+        "<!-- PROGRESS_TABLE_START -->\n"
         "| Day | Folder | Topic | Short description |\n"
         "|-----|--------|-------|-------------------|\n"
     )
@@ -66,20 +76,22 @@ def generate_progress_block(n_done, entries):
     for d in entries:
         m = re.match(r'^(\d+)_+(.*)', d.name)
         day = m.group(1)
-        title = m.group(2).replace('_', ' ') if m else d.name
+        # Default topic derived from folder name, but preserved if README already has one
+        default_title = m.group(2).replace('_', ' ') if m else d.name
+        topic = existing_topics.get(day, default_title)
 
         folder_link = make_folder_link(d)
         short_desc = existing_desc.get(day, "")
 
-        rows.append(f"| {day} | {folder_link} | {title} | {short_desc} |")
+        rows.append(f"| {day} | {folder_link} | {topic} | {short_desc} |")
 
     if n_done < TOTAL_DAYS:
         rows.append("| ... | ... | ... | ... |")
 
-    # NOTE: Add blank line before footer
+    # Exactly one newline before Progress line and no trailing newline after END (prevents extra blank lines)
     footer = (
         "\n\nProgress: **Day {} / {} ({}%)**\n"
-        "<!-- PROGRESS_TABLE_END -->\n"
+        "<!-- PROGRESS_TABLE_END -->"
     ).format(n_done, TOTAL_DAYS, pct)
 
     return header + "\n".join(rows) + footer
@@ -93,6 +105,7 @@ def update_readme(n_done, entries):
     new_block = generate_progress_block(n_done, entries)
 
     if start_marker in text and end_marker in text:
+        # Replace the whole existing block (from START to END) with the new one
         new_text = re.sub(
             f"{re.escape(start_marker)}.*?{re.escape(end_marker)}",
             new_block,
@@ -100,7 +113,8 @@ def update_readme(n_done, entries):
             flags=re.S
         )
     else:
-        new_text = text + "\n\n" + new_block
+        # Append with exactly two newlines before the block for readability
+        new_text = text.rstrip() + "\n\n" + new_block
 
     README.write_text(new_text, encoding='utf-8')
     print("README updated")
