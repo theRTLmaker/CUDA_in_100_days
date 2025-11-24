@@ -52,8 +52,8 @@ CUDA_in_100_days/
 | Day | Folder | Topic | Short description |
 |-----|--------|-------|-------------------|
 | 1 | [`1_vectorAdd`](challanges/1_vectorAdd/) | Vector Addition | Basic CUDA kernel computing element-wise addition of two float vectors. |
-| 2 | [`2_matrixMult`](challanges/2_matrixMult/) | Matrix Multiplication | Naive dense matrix multiplication kernel, revisiting thread indexing in 2D. |
-| 3 | [`3_sharedMem_MatrixMult`](challanges/3_sharedMem_MatrixMult/) | Coalescing Matrix Multiplication |  |
+| 2 | [`2_matrixMult`](challanges/2_matrixMult/) | Matrix Multiplication | Naive dense matrix multiplication kernel, revisiting thread indexing in 2D, memory coalescing. |
+| 3 | [`3_sharedMem_MatrixMult`](challanges/3_sharedMem_MatrixMult/) | Shared Memory Matrix Multiplication |  |
 | ... | ... | ... | ... |
 
 Progress: **Day 3 / 100 (3%)**

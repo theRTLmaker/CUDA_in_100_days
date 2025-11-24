@@ -1,6 +1,6 @@
 # Day 3 — Tiled Matrix Multiplication
 
-On day 2, I've identified two bottleneck, low data reuse and also low data coaslescing. Let's try to fix the second one.
+On day 2, I've identified two bottleneck, low data reuse and also low data coaslescing of matrix B. Let's try to fix the first one!
 
 ---
 
@@ -11,32 +11,43 @@ All matrices are stored in row-major format.
 
 - The final results must be stored in vector `C`
 
-but with improved memory coalescing, which hopefully will bring us added performance
+but with improved data reuse for matrix A, which hopefully will bring us added performance
 
 ---
 
 ## 🧠 Key CUDA Concepts
-- Warping
+- Shared Memory
 
-Threads of blocks are grouped into warps, a warp is 32 threads. A warp is assigned to a warp schedular, which is a physical core that executes the instructions. The grouping into warps is based on threadId. On a multi-dimetional blockDim, threadId is computed as:
+Each SM - Streaming Multiprocessor (core that executes a warp) is equipped with a small shared memory (SMEM). This means tthat a thread can communicate with the other threads in its block vir the shared memory chunk. The shared memory is faster to access than L2/Main Memory, but WAY smaller, so care must be taken when populating it.
+
+Shared memory is defined using the keyworkd `__shared__` as following:
 ```c++
-threadId = threadIdx.x +
-           blockDim.x * (threadIdx.y +
-                         blockDim.y * threadIdx.z)
+__shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
 ```
-Threads with neighboring threadIds are scheduled into the same warp. The important bit is that sequential memory accesses by threads belonging to the same warp can be grouped and executed as one -> COALESCING!
-- Global Memory Coalescing
-
-GPU supports 32B, 64B and 128B memort accesses of aligned accesses. Note that the acceses don't need to be sequential, just consecutive. The idea is to try to make threads that belong to the same warp share consecutive memory addresses
+and the shared memory needs to be explicitly loaded from global memory by each thread
+```c++
+As[threadIdx.x][threadIdx.y] = A[threadIdx.x][threadIdx.y];
+```
 
 ---
 
 ## ⚙️ Kernel Overview
 
+This kernel is using a threadBlock of `16` by `16`. `16 * 16 * 4 (size of float) = 1024` << `228`KB (size of H100 shared memory). So each threadBlock will define a thread block of size 16.
+
+Accounting for a computation where the entire matrix doesn't fit into the shared memory/one grid, I split the computations in blocks of grid size. The for loop will loud a part of the entire A and B matrices, and then compute the partial dot product accessing only the shared memory.
+
+I applied another trick to achieve better coalescing, which was transpose B when placing it in shared memory. In this way, all the accesses to A and B are coaslesced.
+
+
 
 ---
 
 ## Performance Analysis
+However, when I run the kernel, the first performance was really bad. 438.64ms on a H100.
 
+Looking into it, it was due to bank conflicts accessing the Bs. Basically, the problem is on the access pattern:
+- at fixed i, threads vary col and read `Bs[col][i]`. With BLOCK=16 and a `[16][16]` array, adjacent threads hit addresses separated by 16 floats. In 32-bank shared memory, stride 16 maps two threads per bank → 2-way conflict across the warp.
 
 ### Running time
+on H100: `54.02` ms 🎇
