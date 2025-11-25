@@ -55,7 +55,8 @@ CUDA_in_100_days/
 | 2 | [`2_matrixMult`](challanges/2_matrixMult/) | Matrix Multiplication | Naive dense matrix multiplication kernel, revisiting thread indexing in 2D, memory coalescing. |
 | 3 | [`3_sharedMem_MatrixMult`](challanges/3_sharedMem_MatrixMult/) | Shared Memory Matrix Multiplication | Use of shared memory to reduce number of global accesses between threads on the same block |
 | 4 | [`4_sharedMem_blockTiling_MatrixMult`](challanges/4_sharedMem_blockTiling_MatrixMult/) | Shared Memory 1-D Block Tiling Matrix Multiplication | Use of 1-D tiling to increase ratio of loads per FLOP |
+| 5 | [`5_sharedMem_2DblockTiling_MatrixMult copy`](challanges/5_sharedMem_2DblockTiling_MatrixMult copy/) | Shared Memory 2-D Block Tiling Matrix Multiplication | Use of 2-D tiling to increase ratio of loads per FLOP |
 | ... | ... | ... | ... |
 
-Progress: **Day 4 / 100 (4%)**
+Progress: **Day 5 / 100 (5%)**
 <!-- PROGRESS_TABLE_END -->
