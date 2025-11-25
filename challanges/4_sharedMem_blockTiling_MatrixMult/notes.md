@@ -20,6 +20,10 @@ but with higher utilization of the shared memory resources for both matrices.
 
 Take advantage of the entire size of the shared memory that each SM has by loading more and doing more computation per thread.
 
+- #pragma unroll
+
+Use of this keyword to instruct the compiler to decompose the for loop into all the instr. It can only be done if the nunber of iterations is known beforehand
+
 ---
 
 ## ⚙️ Kernel Overview
@@ -41,4 +45,4 @@ Looking into it, it was due to bank conflicts accessing the Bs. Basically, the p
 - at fixed i, threads vary col and read `Bs[col][i]`. With BLOCK=16 and a `[16][16]` array, adjacent threads hit addresses separated by 16 floats. In 32-bank shared memory, stride 16 maps two threads per bank → 2-way conflict across the warp.
 
 ### Running time
-on H100: `54.02` ms 🎇
+on H100: `48.48` ms 🎇

@@ -1,9 +1,9 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-#define BLOCKX 64
-#define BLOCKY 64
-#define TILE 8
+#define BLOCKX 32
+#define BLOCKY 32
+#define TILE 4
 
 __global__ void matrix_multiplication_kernel(const float* A, const float* B, float* C, int M, int N, int K) {
     const int blockCol = blockIdx.x, blockRow = blockIdx.y;
@@ -15,18 +15,20 @@ __global__ void matrix_multiplication_kernel(const float* A, const float* B, flo
 
     // Create a shared memory to be used by the block
     __shared__ float As[BLOCKY][BLOCKX];
-    __shared__ float Bs[BLOCKX][BLOCKX];
+    __shared__ float Bs[BLOCKX][BLOCKX + 1];
 
     float threadResults[TILE] = {0.0};
 
     // Iterate over blocks of the matrices A and B
     // until C is fully computed
+    #pragma unroll
     for (int block = 0; block < N; block += BLOCKX) {
         int nBaseShared = col * TILE;           // 0, TILE, 2*TILE, ...
         int nBaseGlobal = block + nBaseShared;  // Starting N index for this thread
 
         // 1-D Tiling on the X threads,
         // each loads TILE from global to shared memory
+        #pragma unroll
         for (int t = 0; t < TILE; ++t) {
             int nShared = nBaseShared + t;      // 0.. BLOCKX-1
             int nGlobal = nBaseGlobal + t;      // block..block + BLOCKX-1
@@ -46,6 +48,7 @@ __global__ void matrix_multiplication_kernel(const float* A, const float* B, flo
             // execute the dotproduct on the currently cached block
             for (int nLocal = 0; nLocal < min(BLOCKX, N - block); ++nLocal) {
                 float A_temp = As[row][nLocal];
+                #pragma unroll
                 for (int t = 0; t < TILE; ++t) {
                     int kLocal = col * TILE + t;
                     int kGlobal = tcol + t;
