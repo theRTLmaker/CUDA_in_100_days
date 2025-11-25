@@ -28,21 +28,18 @@ Use of this keyword to instruct the compiler to decompose the for loop into all 
 
 ## ⚙️ Kernel Overview
 
-This kernel is using a threadBlock of `16` by `16`. `16 * 16 * 4 (size of float) = 1024` << `228`KB (size of H100 shared memory). So each threadBlock will define a thread block of size 16.
+On this kernel I made use of a bigger shared memory and increased the number of operations a threads does per load. To do that, a tiling of 8 was applied on the X axis. Meaning that each thread is now responsible for loading 8 cols of A and B.
 
-Accounting for a computation where the entire matrix doesn't fit into the shared memory/one grid, I split the computations in blocks of grid size. The for loop will loud a part of the entire A and B matrices, and then compute the partial dot product accessing only the shared memory.
+By doing that, when doing the computation, it's possible to reuse the value of A per multiple B.
 
-I applied another trick to achieve better coalescing, which was transpose B when placing it in shared memory. In this way, all the accesses to A and B are coaslesced.
+Again, to avoid bank conflicts, I padded Bs.
 
-
+I used pragmas to unroll the code whenever the loop size is known at compile time.
 
 ---
 
 ## Performance Analysis
-However, when I run the kernel, the first performance was really bad. 438.64ms on a H100.
-
-Looking into it, it was due to bank conflicts accessing the Bs. Basically, the problem is on the access pattern:
-- at fixed i, threads vary col and read `Bs[col][i]`. With BLOCK=16 and a `[16][16]` array, adjacent threads hit addresses separated by 16 floats. In 32-bank shared memory, stride 16 maps two threads per bank → 2-way conflict across the warp.
+We got a slight benefit versus the older one, but this is the road.
 
 ### Running time
 on H100: `48.48` ms 🎇
