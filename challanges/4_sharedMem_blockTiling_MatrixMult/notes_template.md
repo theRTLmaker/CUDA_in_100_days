@@ -1,33 +1,24 @@
-# Day 3 — Shared Memory Matrix Multiplication
+# Day 4 — Shared Memory Tiled Matrix Multiplication
 
-On day 2, I've identified two bottleneck, low data reuse and also low data coaslescing of matrix B. Let's try to fix the first one!
+On day 3, I've greatly improved the performance of the matrix multiplication by using shared memory. However, the size of the shared memory I'm allocating is quite small compare to whats available, so the occupancy is super low. I can try to do better
 
 ---
 
 ## 🧩 Problem / Goal
-Same as day 2:
+Same as day 3:
 A program that multiplies two matrices of 32-bit floating point numbers on a GPU. Given matrix `A` of `M * N` dimensions and matrix `B` of dimensions `N * K`, compute the product matrix `C`, which will have dimensions `M * K`.
 All matrices are stored in row-major format.
 
 - The final results must be stored in vector `C`
 
-but with improved data reuse for matrix A, which hopefully will bring us added performance
+but with higher utilization of the shared memory resources for both matrices.
 
 ---
 
 ## 🧠 Key CUDA Concepts
-- Shared Memory
+- Block Tilling
 
-Each SM - Streaming Multiprocessor (core that executes a warp) is equipped with a small shared memory (SMEM). This means tthat a thread can communicate with the other threads in its block vir the shared memory chunk. The shared memory is faster to access than L2/Main Memory, but WAY smaller, so care must be taken when populating it.
-
-Shared memory is defined using the keyworkd `__shared__` as following:
-```c++
-__shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
-```
-and the shared memory needs to be explicitly loaded from global memory by each thread
-```c++
-As[threadIdx.x][threadIdx.y] = A[threadIdx.x][threadIdx.y];
-```
+Take advantage of the entire size of the shared memory that each SM has by loading more and doing more computation per thread.
 
 ---
 
